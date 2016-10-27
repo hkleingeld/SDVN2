@@ -60,6 +60,15 @@ uint8_t mediumbusy[]		= {0,0,0,0};
 // Filtering.
 uint16_t zminusone[]		= {0,0,0,0};
 uint16_t zminustwo[]		= {0,0,0,0};
+	
+uint16_t ctr = 0;
+uint16_t ctr2 = 0;
+	
+uint16_t Ch1_250Hz = 0;
+uint16_t Ch2_250Hz = 0;
+uint16_t Ch3_250Hz = 0;
+uint16_t Ch4_250Hz = 0;
+
 
 /************************************************************************/
 /* FUNCTIONS                                                            */
@@ -166,6 +175,7 @@ void receiver_sample(void) {
 		process_sample(spi_adc_read(ADC_CHANNEL4), CHANNEL3);
 		process_sample(spi_adc_read(ADC_CHANNEL1), CHANNEL4);
 	}
+
 }
 
 /**
@@ -176,13 +186,25 @@ void process_sample(uint16_t sample, channel_t channel) {
 	
 	// Run a smoothing filter over the data.	
 	sample = filter(channel, sample);	
+	
+	if(channel == CHANNEL1)
+		Ch1_250Hz = sample;
+		
+	if(channel == CHANNEL2)
+		Ch2_250Hz = sample;
+			
+	if(channel == CHANNEL3)
+		Ch3_250Hz = sample;
+				
+	if(channel == CHANNEL4)
+		Ch4_250Hz = sample;
 		
 	switch (rxsignalstate[channel]) {
-		case NODATA:
-if(channel == CHANNEL3){
-PORTC |= (1<<PORTC2);	// Switch on.
-PORTC &= ~(1<<PORTC2);	// Switch off.
-}
+	case NODATA:
+		if(channel == CHANNEL3){
+			PORTC |= (1<<PORTC2);	// Switch on.
+			PORTC &= ~(1<<PORTC2);	// Switch off.
+		}
 		// Check if we have a rising edge.
 		if (sample > thresholdhigh[channel]) {
 			// We have a rising edge.
@@ -201,11 +223,10 @@ PORTC &= ~(1<<PORTC2);	// Switch off.
 			mediumbusy[channel] = 0;	// Set the medium state.
 			new_rxsignalstate = NODATA;	// Set the next state.
 		}
-
 		break;
-		case HIGH:
-if(channel == CHANNEL3)
-PORTC |= (1<<PORTC2);	// Switch on.
+	case HIGH:
+		if(channel == CHANNEL3)
+			PORTC |= (1<<PORTC2);	// Switch on.
 		// Check if we have a falling edge.
 		if (sample < thresholdlow[channel]) {
 			uint16_t timedif = getTimeDifference(timestamp[channel], SYSTEMTIME);
@@ -231,9 +252,9 @@ PORTC |= (1<<PORTC2);	// Switch on.
 			new_rxsignalstate = HIGH;	// Stay in the current state.
 		}
 		break;
-		case LOW:
-if(channel == CHANNEL3)
-PORTC &= ~(1<<PORTC2);	// Switch off.
+	case LOW:
+		if(channel == CHANNEL3)
+			PORTC &= ~(1<<PORTC2);	// Switch off.
 		// Check if we have a rising edge.
 		if (sample > thresholdlow[channel]) {
 			// Yes, we have an edge.
@@ -246,13 +267,12 @@ PORTC &= ~(1<<PORTC2);	// Switch off.
 			else {
 				receivedbyte[channel] |= (1 << receivedbitcounter[channel]);	// We have received a one, write it.
 			}
-
 			// Do we have a complete byte?
 			if (!receivedbitcounter[channel]) {
 				// Yes, complete, send it over UART.
 				uart_write(channel | (mediumbusy[CHANNEL4] << 7) | (mediumbusy[CHANNEL3] << 6) | (mediumbusy[CHANNEL2] << 5) | (mediumbusy[CHANNEL1] << 4));				// Send the receiver address.
 				uart_write(receivedbyte[channel]);	// Send the data.
-				
+			
 				// Reset the bitcounter.
 				receivedbyte[channel] = 0;		// Reset the data variable.
 				receivedbitcounter[channel] = 7;	// Reset the bit counter.
@@ -265,7 +285,6 @@ PORTC &= ~(1<<PORTC2);	// Switch off.
 		}
 		else if (sample < thresholdlow[channel]) {
 			// We do not have a signal edge, so we are still in low signal state.
-
 			// Check if the time has elapsed.
 			if (getTimeDifference(timestamp[channel],SYSTEMTIME) > TIMELIMIT_END_OF_SIGNAL) {
 				// The signal stays idle, so we have no data.
@@ -287,7 +306,6 @@ PORTC &= ~(1<<PORTC2);	// Switch off.
 		}
 		break;
 	}
-
 	rxsignalstate[channel] = new_rxsignalstate;
 }
 
@@ -309,6 +327,15 @@ void receiver_setenabled(uint8_t enabled) {
 ISR(TIMER0_OVF_vect) {
 	SYSTEMTIME++;	// Update the system counter.
 	
+	if(ctr++ %125 == 0){
+		if(ctr2++ %50 == 0){
+			uart_write((Ch1_250Hz & 0xFF0) >> 4);
+			uart_write((Ch2_250Hz & 0xFF0) >> 4);
+			uart_write((Ch3_250Hz & 0xFF0) >> 4);
+			uart_write((Ch4_250Hz & 0xFF0) >> 4);
+			uart_write('\r');
+		}
+	}
 	// Enable the lines below to measure the time between two ticks on port C2.
 	//PORTC |= (1<<PORTC2);	// Switch on.
 	//PORTC &= ~(1<<PORTC2);	// Switch off.
