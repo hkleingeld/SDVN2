@@ -36,7 +36,7 @@ inline static void uartcontroller_process(uint8_t byte) {
 		case UARTSTATE_MENU:
 				// We have a new transmission.
 				if(byte == UART_CONTROL_FRAMELIMITER) {
-					transmitter_add(byte);
+					//transmitter_add(byte);
 					nextstate = UARTSTATE_LED1;		//..the next byte will contain the first part of the direction.
 				}
 				else {
@@ -57,11 +57,11 @@ inline static void uartcontroller_process(uint8_t byte) {
 				nextstate = UARTSTATE_DATA;
 			break;
 		case UARTSTATE_DATA:
-				transmitter_add(byte);				// Add the byte to the transmitter queue.
 				if(byte == UART_CONTROL_FRAMELIMITER) {
 					nextstate = UARTSTATE_MENU;		// We have received all the data bytes, quit..
 				}
 				else {
+					transmitter_add(byte);			// Add the byte to the transmitter queue.
 					nextstate = UARTSTATE_DATA;		// We are receiving a stream, continue.
 				}
 			break;
