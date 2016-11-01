@@ -12,7 +12,7 @@
 /************************************************************************/
 /* DEFINITIONS                                                          */
 /************************************************************************/
-
+extern uint8_t TakeSample;
 /************************************************************************/
 /* VARIABLES                                                            */
 /************************************************************************/
@@ -54,30 +54,29 @@ int main(void)
 	/************************************************************************/
     while(1)
     {
-		// Transmit data if the timer indicates so.
+		
+		/* Transmitter is disabled for this experiment, we only need to turn a led on and off once.
 		if(transmitflag) {
 			transmitter_timertick();	// Trigger the transmitter.				
 			transmitflag--;				// Remove one ticket from the flag.
-		}
+		}*/
 		
 		// Sample.
-		receiver_sample();
+		if(TakeSample){
+			TakeSample = 0;
+			receiver_sample();
+			if(TakeSample){
+				/*we cant handle current receiver speed :'( */
+			}
+		}
+
 		
 		// Process new data from the UART.
 		if(uart_char_waiting()) {
 //			transmitter_add(uart_read());	// Simply pass through data.
 			uartcontroller_process(uart_read());
 		}
-		
 
-		// Sanity checks.
-
-		if(transmitflag > 0) {
-			//problems!!
-			// We should not have any tickets left in the transmitter flag.
-			// If there are, our main loop is too slow or the interrupt is too fast.
-			// TODO: handle this.
-		}
     }
 	/************************************************************************/
 }
@@ -89,5 +88,5 @@ int main(void)
  * ISR for compare interrupt of Timer 1 (16-bit timer).
  */
 ISR(TIMER1_COMPA_vect) {
-	transmitflag++;	
+
 }
