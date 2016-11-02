@@ -14,6 +14,7 @@
 /************************************************************************/
 /* DEFINITIONS                                                          */
 /************************************************************************/
+#define SINGLE_PD
 	typedef enum {CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4, NUM_CHANNELS} channel_t;
 		
 /************************************************************************/
@@ -61,18 +62,23 @@ void receiver_sample(void) {
 	uint16_t sample1, sample2, sample3, sample4;
 	if(receiverenabled){
 		sample1 = spi_adc_read(ADC_CHANNEL2);
+#ifndef SINGLE_PD
 		sample2 = spi_adc_read(ADC_CHANNEL3);
 		sample3 = spi_adc_read(ADC_CHANNEL4);
 		sample4 = spi_adc_read(ADC_CHANNEL1);
+#endif
 		
 		sampledData[sampleDataFinger] = ((sample1 >> 4) & 0x00FF);
+#ifndef SINGLE_PD
 		sampledData[sampleDataFinger +1] = ((sample2 >> 4) & 0x00FF);
 		sampledData[sampleDataFinger +2] = ((sample3 >> 4) & 0x00FF);
 		sampledData[sampleDataFinger +3] = ((sample4 >> 4) & 0x00FF);
 		sampledData[sampleDataFinger +4] = '\r';
 		
 		sampleDataFinger += 5;
-		
+#else
+		sampleDataFinger++;
+#endif		
 		if(sampleDataFinger == 1500){
 			disable_timer1();
 			receiverenabled = 0;
