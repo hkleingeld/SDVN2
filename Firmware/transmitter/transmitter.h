@@ -23,7 +23,9 @@
 /* PROTOTYPES                                                           */
 /************************************************************************/
 void transmitter_init(void);
-void transmitter_timertick(void);
+void transmitter(void);
+void set_pulse_time(uint8_t);
+void start_pulse(void);
 void transmitter_add(uint8_t data);
 void transmitter_setdirection(uint8_t led8_1, uint8_t led16_9, uint8_t led20_17);
 

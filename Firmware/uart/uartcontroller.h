@@ -31,6 +31,8 @@ inline static void uartcontroller_process(uint8_t byte) {
 	
 	UARTSTATE nextstate = UARTSTATE_MENU;
 	
+	uart_write(byte);
+	
 	// UART MENU	
 	switch(menustate){
 		case UARTSTATE_MENU:
@@ -59,10 +61,13 @@ inline static void uartcontroller_process(uint8_t byte) {
 		case UARTSTATE_DATA:
 				if(byte == UART_CONTROL_FRAMELIMITER) {
 					nextstate = UARTSTATE_MENU;		// We have received all the data bytes, quit..
+					start_pulse();
 				}
 				else {
 					transmitter_add(byte);			// Add the byte to the transmitter queue.
 					nextstate = UARTSTATE_DATA;		// We are receiving a stream, continue.
+					set_pulse_time(byte);			// Tell the transmitter how long the led should be turned on, so ugly, but should work.
+					uart_write(byte);				// debug.
 				}
 			break;
 		default:

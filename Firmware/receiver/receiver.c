@@ -27,7 +27,7 @@ void process_sample(uint16_t sample, channel_t channel);
 volatile uint16_t SYSTEMTIME = 0;
 
 uint8_t TakeSample = 0;
-uint8_t receiverenabled = 0;
+volatile uint8_t receiverenabled = 0;
 uint8_t sampledData[1500] = {0}; /* Data storage for samples, can hold 300 samples of 4 channels with 1 byte saved as separator*/
 uint16_t sampleDataFinger = 0;   /* At what place are we currently string sample data*/
 
@@ -60,12 +60,14 @@ void receiver_sample(void) {
 		sampledData[sampleDataFinger +2] = ((sample3 >> 4) & 0x00FF);
 		sampledData[sampleDataFinger +3] = ((sample4 >> 4) & 0x00FF);
 		sampledData[sampleDataFinger +4] = '\r';
-		sampledData[sampleDataFinger] = ((sample1 >> 4) & 0x00FF);
 		
 		sampleDataFinger += 5;
 		
 		if(sampleDataFinger == 1500){
+			disable_timer1();
+			uart_write('D');
 			receiverenabled = 0;
+			sampleDataFinger = 0;
 		}
 	}
 }
@@ -93,9 +95,7 @@ void receiver_setenabled(uint8_t enabled) {
 ISR(TIMER0_OVF_vect) {
 	SYSTEMTIME++;	// Update the system counter.
 	
-	if(receiverenabled){
-		TakeSample = 1;
-	}
+
 	// Enable the lines below to measure the time between two ticks on port C2.
 	//PORTC |= (1<<PORTC2);	// Switch on.
 	//PORTC &= ~(1<<PORTC2);	// Switch off.

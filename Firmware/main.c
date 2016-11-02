@@ -17,6 +17,9 @@ extern uint8_t TakeSample;
 /* VARIABLES                                                            */
 /************************************************************************/
 volatile uint8_t transmitflag = 0;
+extern volatile uint32_t LedTime;
+extern volatile uint8_t receiverenabled;
+extern volatile uint8_t LedTargetTime;
 
 /************************************************************************/
 /* FUNCTIONS                                                            */
@@ -28,7 +31,7 @@ int main(void)
 	// Set Pin C2 as output for testing purposes.
 	DDRC   |= (1<<PORTC2);	// Set Port C2 as output.
 	
-	timer1_init();		// Set up Timer 1.
+	//timer1_init();		// Set up Timer 1.
 	spi_init();			// Set up SPI.
 	spi_gpio_init();	// Set up GPIO.
 	uart_init();		// Set up UART.
@@ -49,28 +52,21 @@ int main(void)
 	
 	receiver_measure();		// Do a medium measurement.
 	receiver_reset();		// Reset the receiver.
-	receiver_setenabled(1);	// Activate the receiver.
+	//receiver_setenabled(1);	// Activate the receiver.
 	
 	/************************************************************************/
     while(1)
     {
-		
-		/* Transmitter is disabled for this experiment, we only need to turn a led on and off once.
-		if(transmitflag) {
-			transmitter_timertick();	// Trigger the transmitter.				
-			transmitflag--;				// Remove one ticket from the flag.
-		}*/
-		
 		// Sample.
 		if(TakeSample){
 			TakeSample = 0;
 			receiver_sample();
 			if(TakeSample){
 				/*we cant handle current receiver speed :'( */
+				uart_write('X');
 			}
 		}
 
-		
 		// Process new data from the UART.
 		if(uart_char_waiting()) {
 //			transmitter_add(uart_read());	// Simply pass through data.
@@ -88,5 +84,16 @@ int main(void)
  * ISR for compare interrupt of Timer 1 (16-bit timer).
  */
 ISR(TIMER1_COMPA_vect) {
-
+	LedTime++;
+	if(LedTime == 5){
+		spi_gpio_write(GPIO_BANK_LED8_1,	0xff);/*turn led on*/
+	}
+	
+	if(LedTime == LedTargetTime){
+		spi_gpio_write(GPIO_BANK_LED8_1,	0x00); /*turn led off*/
+	}
+	
+	if(receiverenabled){
+		TakeSample = 1;
+	}
 }
