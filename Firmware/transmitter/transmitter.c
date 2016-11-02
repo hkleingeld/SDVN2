@@ -112,6 +112,5 @@ void set_pulse_time(uint8_t targetTime){
 void start_pulse(void){
 	LedTime = 0;
 	receiverenabled = 1;
-	uart_write(LedTargetTime);
 	timer1_init();
 }

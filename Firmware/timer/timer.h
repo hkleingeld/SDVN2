@@ -19,13 +19,13 @@ __inline void timer1_init() {
 	//	TCCR1B |= ((1<<CS11) | (1<< CS10));	// Start timer at Fcpu/64.
 	//	TCCR1B |= (1<<CS12);				// Start timer at Fcpu/256.
 	//	TCCR1B |= ((1<<CS12) | (1<< CS10));	// Start timer at Fcpu/1024.
-	TCCR1B = 0b00001001;
+	TCCR1B = 0b00001010; /*prescaler of 8*/
 	
 	TIMSK1 = 0b00000010;	// TIMSK1 |= (1<<OCIE1A);	// Enable CTC interrupt.
 		
 	// Counter value selection.
 	// OCR1A = Fclk / (clock_divider * required_interrupt_frequency).
-	OCR1A =	800;	// Set CTC compare value to 20000 Hz at 16Mhz.
+	OCR1A =	100;	// Set CTC compare value to 10000 Hz at 16Mhz.
 }
 
 __inline void disable_timer1() {

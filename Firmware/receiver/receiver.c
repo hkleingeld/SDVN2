@@ -47,6 +47,16 @@ void receiver_init(void) {
 void receiver_measure() {
 }
 
+static void send_sampled_data(void){
+	uint16_t sendCtr = 0;
+	while(sendCtr != 1500){
+		if(uart_writebuffer_ready()){
+			uart_write(sampledData[sendCtr]);
+			sendCtr++;
+		}
+	}
+}
+
 void receiver_sample(void) {
 	uint16_t sample1, sample2, sample3, sample4;
 	if(receiverenabled){
@@ -65,9 +75,9 @@ void receiver_sample(void) {
 		
 		if(sampleDataFinger == 1500){
 			disable_timer1();
-			uart_write('D');
 			receiverenabled = 0;
 			sampleDataFinger = 0;
+			send_sampled_data();
 		}
 	}
 }

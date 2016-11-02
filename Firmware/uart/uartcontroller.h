@@ -30,9 +30,7 @@ inline static void uartcontroller_process(uint8_t byte) {
 	static uint8_t led8_1 = 0, led16_9 = 0;
 	
 	UARTSTATE nextstate = UARTSTATE_MENU;
-	
-	uart_write(byte);
-	
+
 	// UART MENU	
 	switch(menustate){
 		case UARTSTATE_MENU:
@@ -67,7 +65,6 @@ inline static void uartcontroller_process(uint8_t byte) {
 					transmitter_add(byte);			// Add the byte to the transmitter queue.
 					nextstate = UARTSTATE_DATA;		// We are receiving a stream, continue.
 					set_pulse_time(byte);			// Tell the transmitter how long the led should be turned on, so ugly, but should work.
-					uart_write(byte);				// debug.
 				}
 			break;
 		default:

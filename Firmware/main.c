@@ -86,7 +86,7 @@ int main(void)
 ISR(TIMER1_COMPA_vect) {
 	LedTime++;
 	if(LedTime == 5){
-		spi_gpio_write(GPIO_BANK_LED8_1,	0xff);/*turn led on*/
+		spi_gpio_write(GPIO_BANK_LED8_1,	0x01);/*turn led on*/
 	}
 	
 	if(LedTime == LedTargetTime){
