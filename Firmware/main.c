@@ -8,25 +8,38 @@
 /* LIBRARIES                                                            */
 /************************************************************************/
 #include "main.h"
+#include <string.h>
 
 /************************************************************************/
 /* DEFINITIONS                                                          */
 /************************************************************************/
-extern uint8_t TakeSample;
+#define IDLE			0
+#define START			1
+#define LED_ON			2
+#define PD_SAMPLING		3
+#define LED_OFF			4
+#define TRANSMIT		5	
+
 /************************************************************************/
 /* VARIABLES                                                            */
 /************************************************************************/
+extern uint8_t TakeSample;
 volatile uint8_t transmitflag = 0;
-extern volatile uint32_t LedTime;
 extern volatile uint8_t receiverenabled;
-extern volatile uint8_t LedTargetTime;
+extern volatile uint16_t LedTargetTime;
+
+volatile uint8_t kick = 1;
 
 /************************************************************************/
 /* FUNCTIONS                                                            */
 /************************************************************************/
 int main(void)
 {
-	
+	uint16_t sampledData[800] = {0}; /* Data storage for samples, can hold 300 samples of 4 channels with 1 byte saved as separator*/
+	uint8_t CurrentState = IDLE;
+	uint8_t NextState = IDLE;
+	uint16_t NumOfSamples = 0;
+	void* sendCtr;
 	/************************************************************************/
 	// Set Pin C2 as output for testing purposes.
 	DDRC   |= (1<<PORTC2);	// Set Port C2 as output.
@@ -55,25 +68,77 @@ int main(void)
 	//receiver_setenabled(1);	// Activate the receiver.
 	
 	/************************************************************************/
-    while(1)
-    {
-		// Sample.
-		if(TakeSample){
-			TakeSample = 0;
-			receiver_sample();
-			if(TakeSample){
-				/*we cant handle current receiver speed :'( */
-				uart_write('X');
+	
+	while(1){
+		if(kick == 0){
+			continue;
+		}
+		
+		if(--kick){
+			uart_write('X'); /*we are too slow :'(*/
+		}
+		
+		CurrentState = NextState;
+		
+		switch(CurrentState){
+		case IDLE:
+			kick++;
+			if(uart_char_waiting()) {
+				//			transmitter_add(uart_read());	// Simply pass through data.
+				uartcontroller_process(uart_read());
 			}
-		}
+			if(LedTargetTime != 0){
+				NextState = START;
+			}
+			break;
+		case START:
+			memset(&sampledData[0],0,sizeof(sampledData));
+			NumOfSamples = 0;
+			NextState = PD_SAMPLING;
+			timer1_init(); /*starts timer and sets led target time*/
+			break;
+			
+		case LED_ON:
+			spi_gpio_write(GPIO_BANK_LED8_1,	0xFF);/*turn led on*/
+			NextState = PD_SAMPLING;
+			break;
+			
+		case PD_SAMPLING:
+			sampledData[NumOfSamples] = spi_adc_read(ADC_CHANNEL2);
+			if(++NumOfSamples == 800){
+				NextState = TRANSMIT;
+			}
+			
+			if(NumOfSamples == 5){
+				NextState = LED_ON;
+			}
 
-		// Process new data from the UART.
-		if(uart_char_waiting()) {
-//			transmitter_add(uart_read());	// Simply pass through data.
-			uartcontroller_process(uart_read());
-		}
+			if(NumOfSamples == LedTargetTime){
+				NextState = LED_OFF;
+			}
+			break;
+			
+		case LED_OFF:
+			spi_gpio_write(GPIO_BANK_LED8_1,	0x00); /*turn led off*/
+			NextState = PD_SAMPLING;
+			break;
 
-    }
+		case TRANSMIT:
+			disable_timer1();
+			sendCtr = &sampledData[0];
+			while(sendCtr != &sampledData[800]){
+				if(uart_writebuffer_ready()){
+					uart_write(*(uint8_t*) sendCtr);
+					sendCtr++;
+				}
+			}
+			NextState = IDLE;
+			LedTargetTime = 0;
+			kick++;
+			break;
+		
+		}
+	}
 	/************************************************************************/
 }
 
@@ -84,16 +149,5 @@ int main(void)
  * ISR for compare interrupt of Timer 1 (16-bit timer).
  */
 ISR(TIMER1_COMPA_vect) {
-	LedTime++;
-	if(LedTime == 5){
-		spi_gpio_write(GPIO_BANK_LED8_1,	0x01);/*turn led on*/
-	}
-	
-	if(LedTime == LedTargetTime){
-		spi_gpio_write(GPIO_BANK_LED8_1,	0x00); /*turn led off*/
-	}
-	
-	if(receiverenabled){
-		TakeSample = 1;
-	}
+	kick++;
 }

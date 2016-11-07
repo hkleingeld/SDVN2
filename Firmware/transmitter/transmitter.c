@@ -20,8 +20,7 @@ typedef enum {TXSTATE_DISABLED, TXSTATE_SIGNALRISE, TXSTATE_SIGNALFALL, TXSTATE_
 RingBuff_t ring_buffer_data;
 
 // Current selected transmission direction.
-volatile uint32_t LedTime = 0;
-uint16_t LedTargetTime = 100; /*time = Total ticks on*/
+uint16_t LedTargetTime = 0; /*time = Total ticks on*/
 extern volatile uint8_t receiverenabled;
 
 uint8_t txLed8_1	= 0b01110000;
@@ -106,11 +105,5 @@ void transmitter_setdirection(uint8_t led8_1, uint8_t led16_9, uint8_t led20_17)
 }
 
 void set_pulse_time(uint8_t targetTime){
-	LedTargetTime = targetTime + 5;
-}
-
-void start_pulse(void){
-	LedTime = 0;
-	receiverenabled = 1;
-	timer1_init();
+	LedTargetTime = targetTime * 2 + 5;
 }

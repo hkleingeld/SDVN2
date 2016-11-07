@@ -59,7 +59,6 @@ inline static void uartcontroller_process(uint8_t byte) {
 		case UARTSTATE_DATA:
 				if(byte == UART_CONTROL_FRAMELIMITER) {
 					nextstate = UARTSTATE_MENU;		// We have received all the data bytes, quit..
-					start_pulse();
 				}
 				else {
 					transmitter_add(byte);			// Add the byte to the transmitter queue.
