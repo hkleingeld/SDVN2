@@ -30,6 +30,8 @@ extern volatile uint16_t LedTargetTime;
 
 volatile uint8_t kick = 1;
 
+extern uint8_t LapsToGo;
+
 /************************************************************************/
 /* FUNCTIONS                                                            */
 /************************************************************************/
@@ -39,6 +41,7 @@ int main(void)
 	uint8_t CurrentState = IDLE;
 	uint8_t NextState = IDLE;
 	uint16_t NumOfSamples = 0;
+	uint8_t escapechar = 0;
 	void* sendCtr;
 	/************************************************************************/
 	// Set Pin C2 as output for testing purposes.
@@ -99,12 +102,12 @@ int main(void)
 			break;
 			
 		case LED_ON:
-			spi_gpio_write(GPIO_BANK_LED8_1,	0xFF);/*turn led on*/
+			spi_gpio_write(GPIO_BANK_LED8_1,	0x01);/*turn led on*/
 			NextState = PD_SAMPLING;
 			break;
 			
 		case PD_SAMPLING:
-			sampledData[NumOfSamples] = spi_adc_read(ADC_CHANNEL2);
+			sampledData[NumOfSamples] = spi_adc_read(ADC_CHANNEL1);
 			if(++NumOfSamples == 800){
 				NextState = TRANSMIT;
 			}
@@ -126,6 +129,15 @@ int main(void)
 		case TRANSMIT:
 			disable_timer1();
 			sendCtr = &sampledData[0];
+			
+			escapechar = 0;
+			while(escapechar != 2){
+				if(uart_writebuffer_ready()){
+					uart_write(0xff);
+					escapechar++;
+				}
+			}
+			
 			while(sendCtr != &sampledData[800]){
 				if(uart_writebuffer_ready()){
 					uart_write(*(uint8_t*) sendCtr);
@@ -133,10 +145,15 @@ int main(void)
 				}
 			}
 			NextState = IDLE;
-			LedTargetTime = 0;
+			if(LapsToGo != 0){
+				LapsToGo --;
+			}
+			else{
+				LedTargetTime = 0;
+			}
+			
 			kick++;
 			break;
-		
 		}
 	}
 	/************************************************************************/

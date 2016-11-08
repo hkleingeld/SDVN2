@@ -29,8 +29,10 @@ __inline void timer1_init() {
 }
 
 __inline void disable_timer1() {
+	cli(); /*atomic code, if we get an interrupt here, we will get unexpected behavior*/
 	TCCR1B = 0;
 	TCNT1 = 0;
+	sei(); /*atomic end*/
 }
 
 __inline void timer0_init() {

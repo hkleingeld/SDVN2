@@ -37,24 +37,11 @@ inline static void uartcontroller_process(uint8_t byte) {
 				// We have a new transmission.
 				if(byte == UART_CONTROL_FRAMELIMITER) {
 					//transmitter_add(byte);
-					nextstate = UARTSTATE_LED1;		//..the next byte will contain the first part of the direction.
+					nextstate = UARTSTATE_DATA;		//..the next byte will contain the first part of the direction.
 				}
 				else {
 					nextstate = UARTSTATE_MENU;		// No new transmission, ignore.
 				}
-			break;
-		case UARTSTATE_LED1:
-				led8_1 = byte;
-				nextstate = UARTSTATE_LED2;
-			break;
-		case UARTSTATE_LED2:
-				led16_9 = byte;
-				nextstate = UARTSTATE_LED3;
-				break;
-		case UARTSTATE_LED3:
-				transmitter_setdirection(led8_1, led16_9, (byte & 0x0f));		// Set the transmission direction.
-				//transmitter_add(byte);				// Signal a new transmission.
-				nextstate = UARTSTATE_DATA;
 			break;
 		case UARTSTATE_DATA:
 				if(byte == UART_CONTROL_FRAMELIMITER) {
