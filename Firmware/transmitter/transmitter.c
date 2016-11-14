@@ -107,5 +107,5 @@ void transmitter_setdirection(uint8_t led8_1, uint8_t led16_9, uint8_t led20_17)
 
 void set_pulse_time(uint8_t targetTime){
 	LedTargetTime = targetTime * 2 + 5;
-	LapsToGo = 9;
+	LapsToGo = 0;
 }

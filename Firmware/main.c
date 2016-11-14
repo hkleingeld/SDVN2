@@ -107,7 +107,7 @@ int main(void)
 			break;
 			
 		case PD_SAMPLING:
-			sampledData[NumOfSamples] = spi_adc_read(ADC_CHANNEL1);
+			sampledData[NumOfSamples] = spi_adc_read(ADC_CHANNEL2);
 			if(++NumOfSamples == 800){
 				NextState = TRANSMIT;
 			}
