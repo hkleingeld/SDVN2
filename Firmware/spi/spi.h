@@ -58,8 +58,7 @@ __inline void spi_init() {
 	//DDRB |= (1<<SPI_CS_ADC);
 	//DDRB |= (1<<SPI_CS_GPIO);
 	DDRB = 0b00101110;
-
-	// Disable the chips.
+		// Disable the chips.
 	SPI_PORT |= (1<<SPI_CS_ADC);
 	SPI_PORT |= (1<<SPI_CS_GPIO);
 

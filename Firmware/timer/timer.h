@@ -25,7 +25,7 @@ __inline void timer1_init() {
 		
 	// Counter value selection.
 	// OCR1A = Fclk / (clock_divider * required_interrupt_frequency).
-	OCR1A =	160;	// Set CTC compare value to 100000 Hz at 16Mhz.
+	OCR1A =	160;	// Set CTC compare value to 200000 Hz at 16Mhz.
 }
 
 __inline void disable_timer1() {

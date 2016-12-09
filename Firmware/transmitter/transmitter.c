@@ -21,6 +21,7 @@ RingBuff_t ring_buffer_data;
 
 // Current selected transmission direction.
 uint16_t LedTargetTime = 0; /*time = Total ticks on*/
+uint16_t PeriodTime = 0;
 uint8_t LapsToGo = 0;
 extern volatile uint8_t receiverenabled;
 
@@ -105,7 +106,34 @@ void transmitter_setdirection(uint8_t led8_1, uint8_t led16_9, uint8_t led20_17)
 	txLed20_17	= led20_17;
 }
 
-void set_pulse_time(uint8_t targetTime){
-	LedTargetTime = targetTime * 2 + 5;
-	LapsToGo = 0;
+void set_pulse_time(void){
+	uint8_t T_on_h = 0;
+	uint8_t T_on_l = 0;
+	uint8_t Period_h = 0;
+	uint8_t Period_l = 0;
+	
+	if(!RingBuffer_IsEmpty(&ring_buffer_data)) {		// Check for new PWM coefficient
+		Period_h = RingBuffer_Remove(&ring_buffer_data);
+		
+		if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+			Period_l = RingBuffer_Remove(&ring_buffer_data);
+			
+			if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+				T_on_h = RingBuffer_Remove(&ring_buffer_data);
+				
+				if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+					T_on_l = RingBuffer_Remove(&ring_buffer_data);
+				}
+			}
+		}
+	}
+	
+	if((T_on_l == 0) && (T_on_h == 0)){ /*not enough data received...*/
+		LapsToGo = 0;
+		return;
+	}
+	
+	PeriodTime = (Period_h << 8) | Period_l;
+	LedTargetTime = (T_on_h << 8) | T_on_l;
+	LapsToGo = 1;
 }

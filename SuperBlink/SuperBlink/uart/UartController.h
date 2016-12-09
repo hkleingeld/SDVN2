@@ -10,7 +10,7 @@
 /************************************************************************/
 /* LIBRARIES                                                            */
 /************************************************************************/
-#include "../transmitter/transmitter.h"
+#include "RingBuffer.h"
 
 /************************************************************************/
 /* DEFINITIONS                                                          */
@@ -21,15 +21,76 @@ typedef enum {UARTSTATE_MENU, UARTSTATE_DATA, UARTSTATE_LED1, UARTSTATE_LED2, UA
 /************************************************************************/
 /* PROTOTYPES                                                           */
 /************************************************************************/
+RingBuff_t ring_buffer_data;
+uint16_t LedTargetTime = 0x8000;
+uint16_t PeriodTime = 0xF000;
+uint16_t SyncTime = 0xEFFE;
+uint8_t FetNr = 1;
 
 /************************************************************************/
 /* INLINE FUNCTIONS                                                     */
 /************************************************************************/
+void transmitter_init(void) {
+
+	RingBuffer_InitBuffer(&ring_buffer_data); // initialize the buffer.
+}
+
+void transmitter_add(uint8_t data) {
+	
+	if(!RingBuffer_IsFull(&ring_buffer_data)) {
+		RingBuffer_Insert(&ring_buffer_data, data);	// Put data in the buffer.
+		} else {
+		//TODO: handle a full buffer. Currently we just discard the data.
+	}
+}
+
+void set_pulse_time(void){
+	uint8_t T_on_h = 0;
+	uint8_t T_on_l = 0;
+	uint8_t Period_h = 0;
+	uint8_t Period_l = 0;
+	uint8_t Intencity = 0;
+	
+	if(!RingBuffer_IsEmpty(&ring_buffer_data)) {		// Check for new PWM coefficient
+		Period_h = RingBuffer_Remove(&ring_buffer_data);
+		
+		if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+			Period_l = RingBuffer_Remove(&ring_buffer_data);
+			
+			if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+				T_on_h = RingBuffer_Remove(&ring_buffer_data);
+				
+				if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+					T_on_l = RingBuffer_Remove(&ring_buffer_data);
+					
+					if(!RingBuffer_IsEmpty(&ring_buffer_data)){
+						Intencity = RingBuffer_Remove(&ring_buffer_data);
+					}
+				}
+			}
+		}
+	}
+	
+	uart_write(Period_h);
+	uart_write(Period_l);
+	uart_write(T_on_h);
+	uart_write(T_on_l);
+	uart_write(Intencity);
+	
+	PeriodTime = (Period_h << 8) | Period_l;
+	LedTargetTime = (T_on_h << 8) | T_on_l;
+	SyncTime = PeriodTime - 2;
+	FetNr = (1 << Intencity);
+}
+
+
 inline static void uartcontroller_process(uint8_t byte) {
 	static UARTSTATE menustate = UARTSTATE_MENU;
 	
 	UARTSTATE nextstate = UARTSTATE_MENU;
-
+	
+	//uart_write(byte);
+	
 	// UART MENU	
 	switch(menustate){
 		case UARTSTATE_MENU:
