@@ -58,7 +58,7 @@ int main(void)
 	receiver_measure();		// Do a medium measurement.
 	receiver_reset();		// Reset the receiver.
 	//receiver_setenabled(1);	// Activate the receiver.
-	
+		
 	/************************************************************************/
 	while(1){
 // 		if(uart_char_waiting()) {
@@ -87,6 +87,8 @@ int main(void)
 			}
 
 			while(UCSR0B & (1 << UDRIE0)); /*wait until  data ready interrupt is turned off (aka, we are done sending data)*/
+			_delay_ms(1000); /*extra time for syncing, solved a werid bug*/
+			
 			while((PINC & 0x04) == 0x04); /*Wait until sync pin is low*/
 			while((PINC & 0x04) == 0x00); /*Wait until sync pin is High*/
 			i = 0;
