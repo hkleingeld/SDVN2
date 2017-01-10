@@ -25,7 +25,7 @@ uint16_t Maximum(uint16_t size, uint16_t * array){
 	uint16_t max = 0;
 	
 	for(int i = 0; i < size ; i++){
-		if(array[i] < max){
+		if(array[i] > max){
 			max = array[i];
 		}
 	}
