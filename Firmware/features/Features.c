@@ -55,12 +55,12 @@ uint16_t AbsoluteDifference(uint16_t size, uint16_t * array1, uint16_t * array2)
 }
 
 uint16_t PulseLenght(uint16_t size, uint16_t * array){
-	uint16_t prev = array[0];
+	uint16_t BaseSample = array[0];
 	uint16_t StartPulse = 0;
 	
 	for(int i = 1; i < size; i++){
 		//I'm allowed to cast the uint16 numbers to int as their maximum value is 3500
-		int16_t diff = (int16_t) prev - (int16_t) array[i];
+		int16_t diff = (int16_t) BaseSample - (int16_t) array[i];
 		if(diff > 2){
 			if(StartPulse == 0){
 				StartPulse = i;
@@ -76,11 +76,11 @@ uint16_t PulseLenght(uint16_t size, uint16_t * array){
 }
 
 uint16_t PulseStart(uint16_t size, uint16_t threshold, uint16_t * array){
-	uint16_t prev = array[0];
+	uint16_t BaseSample = array[0];
 	
 	for(int i = 1; i < size; i++){
 		//I'm allowed to cast the uint16 numbers to int as their maximum value is 3500
-		int16_t diff = (int16_t) prev - (int16_t) array[i];
+		int16_t diff = (int16_t) BaseSample - (int16_t) array[i];
 		if(diff > threshold){
 			return i;
 		}
@@ -89,12 +89,12 @@ uint16_t PulseStart(uint16_t size, uint16_t threshold, uint16_t * array){
 }
 
 uint16_t PulseEnd(uint16_t size, uint16_t threshold, uint16_t * array){
-	uint16_t prev = array[0];
+	uint16_t BaseSample = array[0];
 	uint16_t StartPulse = 0;
 	
 	for(int i = 1; i < size; i++){
 		//I'm allowed to cast the uint16 numbers to int as their maximum value is 3500
-		int16_t diff = (int16_t) prev - (int16_t) array[i];
+		int16_t diff = (int16_t) BaseSample - (int16_t) array[i];
 		if(diff > threshold){
 			if(StartPulse == 0){
 				StartPulse = i;
