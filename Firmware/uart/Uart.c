@@ -17,6 +17,8 @@
 RingBuff_t ring_buffer_out;
 RingBuff_t ring_buffer_in;
 
+volatile uint8_t ADC_select = 3;
+
 uint8_t uart_read() {
 	return RingBuffer_Remove(&ring_buffer_in);
 }
@@ -86,7 +88,11 @@ void uart_clearreceivedbuffer() {
 }
 
 ISR(USART_RX_vect) {
-	RingBuffer_Insert(&ring_buffer_in, UDR0);
+	//RingBuffer_Insert(&ring_buffer_in, UDR0);
+	ADC_select = UDR0;
+	if(uart_writebuffer_ready()){
+		uart_write(ADC_select);
+	}
 }
 
 ISR(USART_UDRE_vect) {

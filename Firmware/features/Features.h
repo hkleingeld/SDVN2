@@ -17,7 +17,7 @@ uint16_t Average(uint16_t size, uint16_t * array);
 
 uint16_t AbsoluteDifference(uint16_t size, uint16_t * array1, uint16_t * array2);
 
-uint16_t PulseLenght(uint16_t size, uint16_t * array);
+uint16_t PulseLenght(uint16_t size, uint16_t threshold, uint16_t * array);
 uint16_t PulseStart(uint16_t size, uint16_t threshold, uint16_t * array);
 uint16_t PulseEnd(uint16_t size, uint16_t threshold, uint16_t * array);
 

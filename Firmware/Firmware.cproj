@@ -38,7 +38,7 @@
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
-    <avrtool>com.atmel.avrdbg.tool.simulator</avrtool>
+    <avrtool>com.atmel.avrdbg.tool.jtagice3plus</avrtool>
     <com_atmel_avrdbg_tool_jtagice3plus>
       <ToolOptions>
         <InterfaceProperties>
@@ -50,10 +50,8 @@
       <ToolNumber>J30200023067</ToolNumber>
       <ToolName>JTAGICE3</ToolName>
     </com_atmel_avrdbg_tool_jtagice3plus>
-    <avrtoolinterface>
-    </avrtoolinterface>
-    <avrtoolserialnumber>
-    </avrtoolserialnumber>
+    <avrtoolinterface>ISP</avrtoolinterface>
+    <avrtoolserialnumber>J30200023067</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E950F</avrdeviceexpectedsignature>
     <avrtoolinterfaceclock>125000</avrtoolinterfaceclock>
     <com_atmel_avrdbg_tool_simulator>
