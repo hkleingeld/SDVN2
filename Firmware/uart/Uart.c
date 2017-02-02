@@ -17,7 +17,7 @@
 RingBuff_t ring_buffer_out;
 RingBuff_t ring_buffer_in;
 
-volatile uint8_t ADC_select = 3;
+volatile uint8_t ADC_select = 1;
 
 uint8_t uart_read() {
 	return RingBuffer_Remove(&ring_buffer_in);

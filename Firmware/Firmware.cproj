@@ -156,6 +156,12 @@
     <Compile Include="features\Features.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="filter\filter.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="filter\filter.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -198,6 +204,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="features" />
+    <Folder Include="filter" />
     <Folder Include="receiver" />
     <Folder Include="transmitter" />
     <Folder Include="timer" />
