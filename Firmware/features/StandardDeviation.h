@@ -10,11 +10,22 @@
 
 #include <stdint.h>
 
-void StdDev_Reset(void);
-void StdDev_setPop(uint16_t size, uint16_t * array);
-void StdDev_AddSample(uint16_t newSample);
+typedef struct stdDev{
+	float StdDev;
+	float StdDevMean;
+	float StdDevVariance;
+	uint16_t StdDevSamplesInPop;
+} stdDev;
 
-int8_t StdDev_GetDeviation(uint16_t newSample);
-float StdDev_GetStdDev(void);
+void StdDev_Reset(stdDev * this);
+void StdDev_setPop(stdDev * this, uint16_t size, uint16_t * array);
+void StdDev_AddSample(stdDev * this, uint16_t newSample);
+
+int8_t StdDev_GetDeviation(stdDev * this, uint16_t newSample);
+float StdDev_GetStdDev(stdDev * this);
+
+void StdDev_Reset(stdDev * this);
+stdDev * StdDev_Init(void);
+void StdDev_Delete(stdDev * this);
 
 #endif
