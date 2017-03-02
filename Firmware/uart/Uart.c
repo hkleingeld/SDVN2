@@ -23,6 +23,13 @@ uint8_t uart_read() {
 	return RingBuffer_Remove(&ring_buffer_in);
 }
 
+void uart_write_string(const char * string){
+	while(*string != '\0'){
+		uart_write(*string);
+		string++;
+	}
+}
+
 void uart_write(uint8_t data) {
 	// Disable interrupts to get exclusive access to ring_buffer_out.
 	cli();

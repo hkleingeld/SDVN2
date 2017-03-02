@@ -15,6 +15,7 @@
 /* PROTOTYPES                                                           */
 /************************************************************************/
 void	uart_write(uint8_t byte);
+void	uart_write_string(const char * string);
 uint8_t uart_read(void);
 uint8_t uart_char_waiting(void);
 uint8_t uart_writebuffer_ready(void);
