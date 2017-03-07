@@ -156,6 +156,12 @@
     <Compile Include="features\Features.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="features\StandardDeviation.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="features\StandardDeviation.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="filter\filter.c">
       <SubType>compile</SubType>
     </Compile>

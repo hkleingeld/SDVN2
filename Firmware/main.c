@@ -10,6 +10,8 @@
 #include "main.h"
 #include "features/Features.h"
 #include "filter/filter.h"
+#include "features/StandardDeviation.h"
+#include <math.h>
 #include <limits.h>
 #include <string.h>
 
@@ -17,35 +19,37 @@
 /* DEFINITIONS                                                          */
 /************************************************************************/
 #define NR_OF_SAMPLES 40
-#define DEFAULT_REFERENCE 0
-#define NOISE_REFERENCE 1
-#define NEW_SAMPLE_SET 2
 
-#define MAX_NOISE_THRESHOLD 100
- 
-
-
+typedef enum state {RESET, DARK_INIT, LIGHT_INIT, NORMAL_OPERATION} State;
+State currentState = RESET;
+State nextState = RESET;
 /************************************************************************/
 /* VARIABLES                                                            */
 /************************************************************************/
-typedef struct Pulse{
-	uint16_t samples[NR_OF_SAMPLES];
-	uint16_t max;
-	uint16_t min;
-	uint16_t avg;
-} Pulse;
 
-volatile uint8_t transmitflag = 0;
+uint16_t samples[NR_OF_SAMPLES];
 
+char itoabuffer[20] = {0};
 volatile uint8_t kick = 0;
 
-Pulse Measurments[3];
-Pulse * referencePulse;
-Pulse * currentPulse;
-	
-	
-void * sendCtr;
 extern volatile uint8_t ADC_select;
+
+void LightOnSync(void){
+	while((PINC & 0x04) == 0x04); /*Wait until sync pin is low*/
+	while((PINC & 0x04) == 0x00); /*Wait until sync pin is High - The light will turn very soon :)*/
+}
+
+void LightOffSync(void){
+	while((PINC & 0x04) == 0x00); /*Wait until sync pin is High*/
+	while((PINC & 0x04) == 0x04); /*Wait until sync pin is low - The light has now turned off, and will be off until next cycle*/
+}
+
+void Error(const char * error_msg){
+	uart_write_string("\nCritical Error: ");
+	uart_write_string(error_msg);
+
+	while(1); //something went horribly wrong. Perma wait to avoid any damage :O!
+}
 
 /************************************************************************/
 /* FUNCTIONS                                                            */
@@ -54,22 +58,28 @@ int main(void)
 {
 	uint8_t adc = ADC_select;
 	int i = 0;
-	uint8_t escapechar = 0;
-	uint8_t darkSample = 0;
-	uint8_t refSample = 0;
-	uint8_t normSample = 0;
-	uint32_t detect = 0;
 	
-	uint16_t maxmax = 0;
-	uint16_t maxmin = 5000;
+	uint8_t n = 0;
+	uint8_t objDetLight = 0;
 	
-	uint32_t detectionThreshold = INT_MAX;
+	uint8_t j = 0;
+	uint8_t objDetDark = 0;
+
+	uint8_t darkSample = 1;
+	uint8_t SamplesTaken = 0;
+	
+	stdDev * darkMaxStdDev;
+	stdDev * lightMaxStdDev;
 
 	/************************************************************************/
-	// Set Pin C2 as output for testing purposes.
-	//DDRC   |= (1<<PORTC2);	// Set Port C2 as output.
+	darkMaxStdDev = StdDev_Init();
+	lightMaxStdDev = StdDev_Init();
 	
-	//timer1_init();		// Set up Timer 1.
+	if((darkMaxStdDev == NULL) || (lightMaxStdDev == NULL)){
+		Error("malloc of stddev failed"); /*malloc of stddev did somehow fail :'( */
+	}
+	
+	//timer1_init();	// Set up Timer 1.
 	spi_init();			// Set up SPI.
 	spi_gpio_init();	// Set up GPIO.
 	uart_init();		// Set up UART.
@@ -85,165 +95,136 @@ int main(void)
 	
 	uart_write('O');	// Test UART.
 	uart_write('K');
+	uart_write('\n');
 	/************************************************************************/
-	
 	
 	receiver_measure();		// Do a medium measurement.
 	receiver_reset();		// Reset the receiver.
 	/************************************************************************/
 	
-	// for the first time, create default reference
-	currentPulse = &Measurments[NOISE_REFERENCE];
-	darkSample = 1;
-	
-	while((PINC & 0x04) == 0x00); /*Wait until sync pin is High*/
-	while((PINC & 0x04) == 0x04); /*Wait until sync pin is low*/
-	_delay_ms(1);
 
 	while(1){
-		switch(adc){
-			case 1: currentPulse->samples[i] = spi_adc_read(ADC_CHANNEL1); break;
-			case 2: currentPulse->samples[i] = spi_adc_read(ADC_CHANNEL2); break;
-			case 3: currentPulse->samples[i] = spi_adc_read(ADC_CHANNEL3); break;
-			case 4: currentPulse->samples[i] = spi_adc_read(ADC_CHANNEL4); break;
-			default: break;
+		switch(ADC_select){ /*PD select, This ensures the selection cant change during sampling*/
+			case 1: adc = 1; break;
+			case 2: adc = 2; break;
+			case 3: adc = 3; break;
+			case 4: adc = 4; break;
+			default: adc = 0; break;
 		}
-		i++;
 		
-		if(i == NR_OF_SAMPLES){
-			
-			//Always filter, and get maximum
-			if(darkSample){
-				uint16_t min = Minimum(NR_OF_SAMPLES, currentPulse->samples);
-				uint16_t max = Maximum(NR_OF_SAMPLES, currentPulse->samples);
-				
-				if((max - min) > MAX_NOISE_THRESHOLD){
-					//Above noise threshold? Retry and hope for less noise next loop
-					darkSample = 1;
-					uart_write('a');
-				}
-				else{
-					//Continue
-					uart_write('b');
-					darkSample = 0;
-					refSample = 100;
-					//filter_CalculateStartupValues(currentPulse->samples);
-					filter100_IRR(currentPulse->samples);
-					currentPulse->avg = Average(NR_OF_SAMPLES, currentPulse->samples);
-					currentPulse->min = Minimum(NR_OF_SAMPLES, currentPulse->samples);
-					currentPulse->max = Maximum(NR_OF_SAMPLES, currentPulse->samples);
-				}
+		LightOnSync(); /*sync*/
+		i = 0;
+		if(darkSample){
+			LightOffSync(); /*Wait until sync pin is low (light is turned off)*/
+			_delay_ms(1); // Just to be sure the light is actually off
+		}
+		
+		do{ /*sample*/
+			switch(adc){
+				case 1: samples[i] = spi_adc_read(ADC_CHANNEL1); break;
+				case 2: samples[i] = spi_adc_read(ADC_CHANNEL2); break;
+				case 3: samples[i] = spi_adc_read(ADC_CHANNEL3); break;
+				case 4: samples[i] = spi_adc_read(ADC_CHANNEL4); break;
+				default: break;
 			}
-			else{
-				filter100_IRR(currentPulse->samples);	
-			}
-			
-			currentPulse->max = Maximum(NR_OF_SAMPLES, currentPulse->samples);
-			
-			if(normSample){ //normal sample, after first loop
-				//uint32_t Absdiff = AbsoluteDifference(NR_OF_SAMPLES, currentPulse->samples, referencePulse->samples);
-				
-// 				uart_write((uint8_t) ((Absdiff & 0xFF000000) >> 24));
-// 				uart_write((uint8_t) ((Absdiff & 0x00FF0000) >> 16));
-// 				uart_write((uint8_t) (currentPulse->max &  0x000000FF));
-//  			uart_write((uint8_t) ((currentPulse->max & 0x0000FF00) >> 8));
- 				
+			i++;
+		} while(i < NR_OF_SAMPLES);
 
-// 				uart_write((uint8_t) ((currentPulse->max & 0xFF00) >> 8));
-// 				uart_write((uint8_t) (currentPulse->max & 0xFF));
-							
-				if((currentPulse->max > (maxmax+1)) || (currentPulse->max < (maxmin-1))){
-					detect++;
-					if(detect > 3){
-						uart_write('%');
+		SamplesTaken++;
+		//Filter
+// 		for(int j=0; j<NR_OF_SAMPLES ; j++){
+// 			uart_write(samples[j] & 0xFF);
+// 			uart_write(samples[j]>>8 & 0xFF);
+// 		}
+		filter100_IRR(&samples[0]);
+
+		//Extract features
+		uint16_t max = Maximum(NR_OF_SAMPLES, &samples[0]);
+//  	uart_write_string(itoa(max,itoabuffer,10));
+// 		uart_write('\n');
+	
+		switch(currentState){
+		case DARK_INIT:
+			if(StdDev_Update(darkMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
+				if(StdDev_GetStdDev(darkMaxStdDev) > 15){ //stddev is too high, keep going.
+					nextState = LIGHT_INIT;
+					uart_write_string("Starting Light Init\n");
+				}
+			}
+			break;
+		case LIGHT_INIT:
+			if(StdDev_Update(lightMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
+				if(StdDev_GetStdDev(lightMaxStdDev) < 15){ //stddev is too high, keep going.
+					nextState = NORMAL_OPERATION;
+					uart_write_string("Starting Normal opperation\n");
+				}
+			}
+			break;
+		case NORMAL_OPERATION:
+			switch(darkSample){
+				case 0: //light sample
+					darkSample = 1;
+					if(objDetLight){
+						if(StdDev_Update(lightMaxStdDev,max,FORCE_UPDATE) != SHRT_MAX){
+							if(StdDev_GetStdDev(darkMaxStdDev) < 15){
+								objDetLight = 0;
+							}
+						}
+					}
+					if(StdDev_Update(lightMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
+						n = 0;
 					}
 					else{
-						uart_write('?');
+						if(n++ == 3){
+							objDetLight = 1;
+							StdDev_Reset(lightMaxStdDev);
+							n = 0;
+						}
 					}
-				}
-				else{
-					detect = 0;
-					uart_write('-');
-				}
-			}
-			
-			if(refSample){ //make reference sample after this loop
-				if(currentPulse == &Measurments[DEFAULT_REFERENCE]){
-					
-					currentPulse->avg = Average(NR_OF_SAMPLES, currentPulse->samples);
-					currentPulse->min = Minimum(NR_OF_SAMPLES, currentPulse->samples);
-					currentPulse->max = Maximum(NR_OF_SAMPLES, currentPulse->samples);
-					
-					if(currentPulse->max > maxmax){
-						maxmax = currentPulse->max;
+				break;
+				
+				case 1: //dark sample
+					darkSample = 0;
+					if(objDetDark){
+						if(StdDev_Update(darkMaxStdDev,max,FORCE_UPDATE) != SHRT_MAX){
+							if(StdDev_GetStdDev(darkMaxStdDev) < 15){
+								objDetDark = 0;
+							}
+						}
 					}
-					
-					if(currentPulse->max < maxmin){
-						maxmin = currentPulse->max;
+					if(StdDev_Update(lightMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
+						j = 0;
 					}
-					uart_write((uint8_t) ((maxmax & 0xFF00) >> 8));
-					uart_write((uint8_t) (maxmax & 0xFF));
-					
-// 							uart_write((uint8_t) ((maxmax & 0xFF00) >> 8));
-// 					uart_write((uint8_t) ((currentPulse->avg & 0xFF00) >> 8));
-// 					uart_write((uint8_t) (currentPulse->avg & 0xFF));
-					
-					//detectionThreshold = AbsoluteDifference(NR_OF_SAMPLES, currentPulse->samples, Measurments[NOISE_REFERENCE].samples);
-
-					referencePulse = currentPulse;
-					currentPulse = &Measurments[NEW_SAMPLE_SET];
-					refSample--;
-					if(refSample == 0){
-						normSample = 1;
-						
-						uart_write((uint8_t) ((maxmax & 0xFF00) >> 8));
-						uart_write((uint8_t) (maxmax & 0xFF));
-
-						uart_write((uint8_t) ((maxmin & 0xFF00) >> 8));
-						uart_write((uint8_t) (maxmin & 0xFF));
+					else{
+						if(j++ == 3){
+							objDetDark = 1;
+							StdDev_Reset(darkMaxStdDev);
+							j = 0;
+						}
 					}
-					
-				}
-				else{
-					currentPulse = &Measurments[DEFAULT_REFERENCE];
-				}
-			}
-
-			/*transmit data*/			
-// 			escapechar = 0;
-// 			while(escapechar != 2){
-// 				if(uart_writebuffer_ready()){
-// 					uart_write(0xff);
-// 					escapechar++;
-// 				}
-// 			}
-// 			sendCtr = currentPulse->samples;
-// 			while(sendCtr != &(currentPulse->samples[NR_OF_SAMPLES])){
-// 				if(uart_writebuffer_ready()){
-// 					uart_write(*(uint8_t*) sendCtr);
-// 					sendCtr++;
-// 				}	
-// 			}
-
-			while(UCSR0B & (1 << UDRIE0)); /*wait until  data ready interrupt is turned off (aka, we are done sending data)*/
-					
-			switch(ADC_select){
-				case 1: adc = 1; break;
-				case 2: adc = 2; break;
-				case 3: adc = 3; break;
-				case 4: adc = 4; break;
-				default: adc = 0; break;
-			}			
-//			_delay_ms(1000); /*extra time for syncing, solved a werid bug*/
-			_delay_ms(50);
-			while((PINC & 0x04) == 0x04); /*Wait until sync pin is low*/
-			while((PINC & 0x04) == 0x00); /*Wait until sync pin is High*/
-			i = 0;
-			if(darkSample){
-				while((PINC & 0x04) == 0x04); /*Wait until sync pin is low (light is turned off)*/
-				_delay_ms(1); // Just to be sure the light is actually off
-			}
+				break;
+				}	
+			break;
+		case RESET:
+			nextState = DARK_INIT;
+			StdDev_Reset(darkMaxStdDev);
+			StdDev_Reset(lightMaxStdDev);
+			uart_write_string("Starting dark init\n");
+			break;
+		default:
+			nextState = RESET;
+			break;
 		}
+		
+		//check for instructions
+		if(currentState != nextState){
+			SamplesTaken = 0;
+			currentState = nextState;
+		}
+		/*turn light on or off based on objDetLight and objDetDark*/
+		
+		_delay_ms(50);
+		while(UCSR0B & (1 << UDRIE0)); /*wait until  data ready interrupt is turned off (aka, we are done sending data)*/
 	}
 /************************************************************************/
 }

@@ -12,6 +12,7 @@
 /************************************************************************/
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
 #include "timer/timer.h"
 #include "spi/spi.h"
 #include "uart/uart.h"
