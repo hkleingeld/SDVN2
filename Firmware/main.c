@@ -72,10 +72,10 @@ int main(void)
 	stdDev * lightMaxStdDev;
 
 	/************************************************************************/
-	darkMaxStdDev = StdDev_Init();
+	//darkMaxStdDev = StdDev_Init();
 	lightMaxStdDev = StdDev_Init();
 	
-	if((darkMaxStdDev == NULL) || (lightMaxStdDev == NULL)){
+	if(/*(darkMaxStdDev == NULL) ||*/ (lightMaxStdDev == NULL)){
 		Error("malloc of stddev failed"); /*malloc of stddev did somehow fail :'( */
 	}
 	
@@ -140,19 +140,22 @@ int main(void)
 
 		//Extract features
 		uint16_t max = Maximum(NR_OF_SAMPLES, &samples[0]);
-//  	uart_write_string(itoa(max,itoabuffer,10));
-// 		uart_write('\n');
+//  		uart_write_string(itoa(max,itoabuffer,10));
+// 		uart_write(' ');
 	
 		switch(currentState){
-		case DARK_INIT:
-			if(StdDev_Update(darkMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
-				if(StdDev_GetStdDev(darkMaxStdDev) > 15){ //stddev is too high, keep going.
-					nextState = LIGHT_INIT;
-					uart_write_string("Starting Light Init\n");
-				}
-			}
-			break;
+// 		case DARK_INIT:
+// 			if(StdDev_Update(darkMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
+// 				if(StdDev_GetStdDev(darkMaxStdDev) < 15){ //stddev is too high, keep going.
+// 					nextState = LIGHT_INIT;
+// 					darkSample = 0;
+// 					uart_write_string("Starting Light Init\n");
+// 				}
+// 								
+// 			}	
+// 			break;
 		case LIGHT_INIT:
+			darkSample = 0;
 			if(StdDev_Update(lightMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
 				if(StdDev_GetStdDev(lightMaxStdDev) < 15){ //stddev is too high, keep going.
 					nextState = NORMAL_OPERATION;
@@ -163,24 +166,30 @@ int main(void)
 		case NORMAL_OPERATION:
 			switch(darkSample){
 				case 0: //light sample
-					darkSample = 1;
+					//darkSample = 1;
+					
 					if(objDetLight){
-						if(StdDev_Update(lightMaxStdDev,max,FORCE_UPDATE) != SHRT_MAX){
-							if(StdDev_GetStdDev(darkMaxStdDev) < 15){
+						if(StdDev_Update(lightMaxStdDev,max,FORCE_UPDATE) != USHRT_MAX){
+							if(StdDev_GetStdDev(lightMaxStdDev) < 15){
 								objDetLight = 0;
+								uart_write_string("\n\n\nOK\n\n\n");
 							}
 						}
 					}
-					if(StdDev_Update(lightMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
-						n = 0;
-					}
 					else{
-						if(n++ == 3){
-							objDetLight = 1;
-							StdDev_Reset(lightMaxStdDev);
+						if(StdDev_Update(lightMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
 							n = 0;
 						}
+						else{
+							if(n++ == 1){
+								objDetLight = 1;
+								StdDev_Reset(lightMaxStdDev);
+								n = 0;
+							}
+						}
 					}
+					uart_write_string(itoa(n,itoabuffer,10));
+
 				break;
 				
 				case 1: //dark sample
@@ -192,28 +201,39 @@ int main(void)
 							}
 						}
 					}
-					if(StdDev_Update(lightMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
-						j = 0;
-					}
 					else{
-						if(j++ == 3){
-							objDetDark = 1;
-							StdDev_Reset(darkMaxStdDev);
+						if(StdDev_Update(darkMaxStdDev,max,0) < 31){ //if newly added sample is whithin 3 deviations
 							j = 0;
+						}
+						else{
+							if(j++ == 1){
+								objDetDark = 1;
+								StdDev_Reset(darkMaxStdDev);
+								j = 0;
+							}
 						}
 					}
 				break;
 				}	
 			break;
 		case RESET:
-			nextState = DARK_INIT;
-			StdDev_Reset(darkMaxStdDev);
+			nextState = LIGHT_INIT;
+			//StdDev_Reset(darkMaxStdDev);
 			StdDev_Reset(lightMaxStdDev);
 			uart_write_string("Starting dark init\n");
 			break;
 		default:
 			nextState = RESET;
 			break;
+		}
+
+		if(objDetDark == 1){
+			uart_write('D');
+		}
+		
+		if(objDetLight == 1){
+			uart_write('L');
+			uart_write('\n');
 		}
 		
 		//check for instructions

@@ -17,7 +17,7 @@ typedef struct stdDev{
 	float variance;
 	uint16_t * StdSampleList;
 	uint8_t active;
-	uint8_t listIndex;
+	uint16_t listIndex;
 } stdDev;
 
 void StdDev_Reset(stdDev * this);

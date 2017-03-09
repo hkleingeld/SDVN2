@@ -14,7 +14,7 @@
 #include <math.h>
 
 
-#define NR_OF_STD_SAMPLES 128
+#define NR_OF_STD_SAMPLES 400
 
 #include "StandardDeviation.h"
 #include "../uart/uart.h"
@@ -35,7 +35,7 @@ static void updateSum(stdDev * this, uint16_t newSample){
 	this->sum -= this->StdSampleList[this->listIndex];
 	this->sum += newSample;
 	this->StdSampleList[this->listIndex] = newSample;
-	
+
 	this->listIndex++;
 	if(this->listIndex == NR_OF_STD_SAMPLES){
 		this->listIndex = 0;
@@ -44,7 +44,7 @@ static void updateSum(stdDev * this, uint16_t newSample){
 
 static uint32_t Sum(stdDev * this){
 	uint32_t sum = 0;
-	for(int i = 0; i < NR_OF_STD_SAMPLES ; i++){
+	for(uint16_t i = 0; i < NR_OF_STD_SAMPLES ; i++){
 		sum += this->StdSampleList[i];
 	}
 
@@ -52,7 +52,7 @@ static uint32_t Sum(stdDev * this){
 }
 
 void StdDev_Reset(stdDev * this){
-	this->StdDev = 0;
+	this->StdDev = 10000.0; /*Std is undefined, thus initialized high*/
 	this->sum = 0;
 	this->variance = 0;
 	this->active = 0;
@@ -89,6 +89,9 @@ void StdDev_setPop(stdDev * this){
 }
 
 float StdDev_GetStdDev(stdDev * this){
+	if(this->StdDev < 1){
+		return 1;
+	}
 	return(this->StdDev);
 }
 
@@ -97,27 +100,39 @@ float StdDev_GetMean(stdDev * this){
 }
 
 uint16_t StdDev_Update(stdDev * this, uint16_t newSample, uint8_t settings){
+	char buffer[20];
 	if(this->active){
 		float mean = this->sum / NR_OF_STD_SAMPLES;
-		float sampleDeviation = newSample - mean / this->StdDev;
-
-		if( (fabsf(sampleDeviation) < (this->StdDev * 3)) || 
+		float sampleDeviation = (newSample - mean) / StdDev_GetStdDev(this);
+		
+		uart_write('\n');
+		uart_write_string(itoa(newSample,buffer,10));
+		uart_write(' ');
+		uart_write_string(itoa(mean,buffer,10));
+		uart_write(' ');
+		uart_write_string(itoa(StdDev_GetStdDev(this),buffer,10));
+		uart_write(' ');
+		uart_write_string(itoa(fabsf(sampleDeviation),buffer,10));
+		uart_write(' ');
+		while(UCSR0B & (1 << UDRIE0)); /*wait until  data ready interrupt is turned off (aka, we are done sending data)*/
+		
+		if( (fabsf(sampleDeviation) < (StdDev_GetStdDev(this) * 3)) || 
 		    ((settings & FORCE_UPDATE) == FORCE_UPDATE))
 			{ //if sample is in range or if forced, update!
 			updateSum(this, newSample);
 			this->variance = Variance(this);
 			this->StdDev = sqrt(this->variance/NR_OF_STD_SAMPLES);
 		}
-		else if((settings & FORCE_UPDATE) == FORCE_UPDATE){
-			
-		}
-		return (sampleDeviation*10);
+		return (fabsf(sampleDeviation)*10);
 	}
 	else{
-		if(this->listIndex == NR_OF_STD_SAMPLES){
-			this->active = 1;
-		}
 		updateSum(this, newSample);
+		if(this->listIndex == 0){
+			this->active = 1;
+			this->variance = Variance(this);
+			this->StdDev = sqrt(this->variance/NR_OF_STD_SAMPLES);
+			uart_write_string("std is now active\n");
+		}
 		return(USHRT_MAX);
 	}
 }
