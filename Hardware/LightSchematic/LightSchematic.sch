@@ -90,55 +90,38 @@ $EndComp
 $Comp
 L R R?
 U 1 1 5811F559
-P 2800 2000
-F 0 "R?" V 2880 2000 50  0000 C CNN
-F 1 "10k" V 2700 2000 50  0000 C CNN
-F 2 "" V 2730 2000 50  0000 C CNN
-F 3 "" H 2800 2000 50  0000 C CNN
-	1    2800 2000
+P 2800 1750
+F 0 "R?" V 2880 1750 50  0000 C CNN
+F 1 "10k" V 2700 1750 50  0000 C CNN
+F 2 "" V 2730 1750 50  0000 C CNN
+F 3 "" H 2800 1750 50  0000 C CNN
+	1    2800 1750
 	1    0    0    -1  
 $EndComp
 $Comp
 L R R?
 U 1 1 5811F592
-P 2800 1550
-F 0 "R?" V 2700 1550 50  0000 C CNN
-F 1 "1.5k" V 2900 1550 50  0000 C CNN
-F 2 "" V 2730 1550 50  0000 C CNN
-F 3 "" H 2800 1550 50  0000 C CNN
-	1    2800 1550
+P 2800 1300
+F 0 "R?" V 2700 1300 50  0000 C CNN
+F 1 "1.5k" V 2900 1300 50  0000 C CNN
+F 2 "" V 2730 1300 50  0000 C CNN
+F 3 "" H 2800 1300 50  0000 C CNN
+	1    2800 1300
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	1800 1350 1800 1800
-Wire Wire Line
-	1800 1800 1900 1800
-Wire Wire Line
-	1900 1900 1800 1900
-Wire Wire Line
-	3200 3150 3200 3000
-Wire Wire Line
-	2800 1850 2800 1700
 $Comp
 L +12V #PWR?
 U 1 1 5811FA22
-P 2800 1350
-F 0 "#PWR?" H 2800 1200 50  0001 C CNN
-F 1 "+12V" H 2800 1490 50  0000 C CNN
-F 2 "" H 2800 1350 50  0000 C CNN
-F 3 "" H 2800 1350 50  0000 C CNN
-	1    2800 1350
+P 2800 1100
+F 0 "#PWR?" H 2800 950 50  0001 C CNN
+F 1 "+12V" H 2800 1240 50  0000 C CNN
+F 2 "" H 2800 1100 50  0000 C CNN
+F 3 "" H 2800 1100 50  0000 C CNN
+	1    2800 1100
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	2800 1350 2800 1400
-Text GLabel 2700 1800 0    60   Input ~ 0
+Text GLabel 2700 1550 0    60   Input ~ 0
 PWM
-Wire Wire Line
-	2700 1800 2800 1800
-Connection ~ 2800 1800
-Wire Wire Line
-	3200 2700 3200 2550
 $Comp
 L Q_NMOS_GDS Q?
 U 1 1 58454E17
@@ -172,12 +155,6 @@ F 3 "" H 4550 2850 50  0000 C CNN
 	1    4550 2850
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	4550 3150 4550 3000
-Wire Wire Line
-	4150 2350 4250 2350
-Wire Wire Line
-	4550 2700 4550 2550
 $Comp
 L Q_NMOS_GDS Q?
 U 1 1 58454F2A
@@ -211,12 +188,6 @@ F 3 "" H 5850 2850 50  0000 C CNN
 	1    5850 2850
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	5850 3150 5850 3000
-Wire Wire Line
-	5850 2700 5850 2550
-Wire Wire Line
-	1800 1900 1800 2050
 Text Label 1800 2050 0    60   ~ 0
 Led
 Text Label 3200 1650 0    60   ~ 0
@@ -225,22 +196,6 @@ Text Label 4550 1600 0    60   ~ 0
 Led
 Text Label 5850 1600 0    60   ~ 0
 Led
-Wire Wire Line
-	5850 1600 5850 2150
-Wire Wire Line
-	4550 1600 4550 2150
-Wire Wire Line
-	3200 1650 3200 2150
-Wire Wire Line
-	2800 2150 2800 2350
-Wire Wire Line
-	2800 2350 2900 2350
-Wire Wire Line
-	4150 2350 4150 2150
-Wire Wire Line
-	5450 2150 5450 2350
-Wire Wire Line
-	5450 2350 5550 2350
 $Comp
 L +8V #PWR?
 U 1 1 5845579D
@@ -274,8 +229,6 @@ F 3 "" H 4150 1550 50  0000 C CNN
 	1    4150 1550
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	4150 1850 4150 1700
 $Comp
 L +12V #PWR?
 U 1 1 58456217
@@ -287,13 +240,8 @@ F 3 "" H 4150 1350 50  0000 C CNN
 	1    4150 1350
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	4150 1350 4150 1400
 Text GLabel 4050 1800 0    60   Input ~ 0
 PWM
-Wire Wire Line
-	4050 1800 4150 1800
-Connection ~ 4150 1800
 $Comp
 L R R?
 U 1 1 58456291
@@ -316,8 +264,6 @@ F 3 "" H 5450 1550 50  0000 C CNN
 	1    5450 1550
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	5450 1850 5450 1700
 $Comp
 L +12V #PWR?
 U 1 1 5845629E
@@ -329,13 +275,101 @@ F 3 "" H 5450 1350 50  0000 C CNN
 	1    5450 1350
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	5450 1350 5450 1400
 Text GLabel 5350 1800 0    60   Input ~ 0
 PWM
-Wire Wire Line
-	5350 1800 5450 1800
-Connection ~ 5450 1800
 Text Notes 2100 3150 0    60   ~ 0
 7V / 30R = 0.23A\n7V * 0.23A = 1.63Watt
+$Comp
+L Q_NPN_BCE Q?
+U 1 1 587CC680
+P 3700 2600
+F 0 "Q?" H 4000 2650 50  0000 R CNN
+F 1 "Q_NPN_BCE" H 4300 2550 50  0000 R CNN
+F 2 "" H 3900 2700 50  0000 C CNN
+F 3 "" H 3700 2600 50  0000 C CNN
+	1    3700 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 587CC956
+P 3800 3200
+F 0 "#PWR?" H 3800 2950 50  0001 C CNN
+F 1 "GND" H 3800 3050 50  0000 C CNN
+F 2 "" H 3800 3200 50  0000 C CNN
+F 3 "" H 3800 3200 50  0000 C CNN
+	1    3800 3200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3800 2800 3800 3200
+Connection ~ 3200 2600
+Wire Wire Line
+	3500 2600 3200 2600
+Connection ~ 2800 2050
+Wire Wire Line
+	3800 2050 2800 2050
+Wire Wire Line
+	3800 2400 3800 2050
+Connection ~ 5450 1800
+Wire Wire Line
+	5350 1800 5450 1800
+Wire Wire Line
+	5450 1350 5450 1400
+Wire Wire Line
+	5450 1850 5450 1700
+Connection ~ 4150 1800
+Wire Wire Line
+	4050 1800 4150 1800
+Wire Wire Line
+	4150 1350 4150 1400
+Wire Wire Line
+	4150 1850 4150 1700
+Wire Wire Line
+	5450 2350 5550 2350
+Wire Wire Line
+	5450 2150 5450 2350
+Wire Wire Line
+	4150 2350 4150 2150
+Wire Wire Line
+	2800 2350 2900 2350
+Wire Wire Line
+	2800 1900 2800 2350
+Wire Wire Line
+	3200 1650 3200 2150
+Wire Wire Line
+	4550 1600 4550 2150
+Wire Wire Line
+	5850 1600 5850 2150
+Wire Wire Line
+	1800 1900 1800 2050
+Wire Wire Line
+	5850 2700 5850 2550
+Wire Wire Line
+	5850 3150 5850 3000
+Wire Wire Line
+	4550 2700 4550 2550
+Wire Wire Line
+	4150 2350 4250 2350
+Wire Wire Line
+	4550 3150 4550 3000
+Wire Wire Line
+	3200 2700 3200 2550
+Connection ~ 2800 1550
+Wire Wire Line
+	2700 1550 2800 1550
+Wire Wire Line
+	2800 1100 2800 1150
+Wire Wire Line
+	2800 1600 2800 1450
+Wire Wire Line
+	3200 3150 3200 3000
+Wire Wire Line
+	1900 1900 1800 1900
+Wire Wire Line
+	1800 1800 1900 1800
+Wire Wire Line
+	1800 1350 1800 1800
+Text Notes 3950 3000 0    60   ~ 0
+E = 1\nB = 2\nC = 3
 $EndSCHEMATC
