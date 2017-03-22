@@ -23,6 +23,7 @@ typedef struct stdDev{
 void StdDev_Reset(stdDev * this);
 void StdDev_setPop(stdDev * this);
 
+float StdDev_GetMean(stdDev * this);
 int8_t StdDev_GetDeviation(stdDev * this, uint16_t newSample);
 float StdDev_GetStdDev(stdDev * this);
 uint16_t StdDev_Update(stdDev * this, uint16_t newSample, uint8_t settings);

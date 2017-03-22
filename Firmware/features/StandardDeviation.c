@@ -14,7 +14,7 @@
 #include <math.h>
 
 
-#define NR_OF_STD_SAMPLES 400
+#define NR_OF_STD_SAMPLES 300
 
 #include "StandardDeviation.h"
 #include "../uart/uart.h"
@@ -105,17 +105,6 @@ uint16_t StdDev_Update(stdDev * this, uint16_t newSample, uint8_t settings){
 		float mean = this->sum / NR_OF_STD_SAMPLES;
 		float sampleDeviation = (newSample - mean) / StdDev_GetStdDev(this);
 		
-		uart_write('\n');
-		uart_write_string(itoa(newSample,buffer,10));
-		uart_write(' ');
-		uart_write_string(itoa(mean,buffer,10));
-		uart_write(' ');
-		uart_write_string(itoa(StdDev_GetStdDev(this),buffer,10));
-		uart_write(' ');
-		uart_write_string(itoa(fabsf(sampleDeviation),buffer,10));
-		uart_write(' ');
-		while(UCSR0B & (1 << UDRIE0)); /*wait until  data ready interrupt is turned off (aka, we are done sending data)*/
-		
 		if( (fabsf(sampleDeviation) < (StdDev_GetStdDev(this) * 3)) || 
 		    ((settings & FORCE_UPDATE) == FORCE_UPDATE))
 			{ //if sample is in range or if forced, update!
@@ -123,7 +112,7 @@ uint16_t StdDev_Update(stdDev * this, uint16_t newSample, uint8_t settings){
 			this->variance = Variance(this);
 			this->StdDev = sqrt(this->variance/NR_OF_STD_SAMPLES);
 		}
-		return (fabsf(sampleDeviation)*10);
+		return (fabsf(this->StdDev)*10);
 	}
 	else{
 		updateSum(this, newSample);
