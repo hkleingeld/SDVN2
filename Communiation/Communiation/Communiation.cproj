@@ -490,6 +490,24 @@
     <Folder Include="src\config\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\sense.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\sense.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SuperBlink.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SuperBlink.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\uart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\uart.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\asf.h">
       <SubType>compile</SubType>
     </None>
