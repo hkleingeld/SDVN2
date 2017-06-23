@@ -8,7 +8,8 @@
  *		BONUS: Run algorithm on platform
  * 
  * Superblink
- *		Superblink port with Constant sync between blink and ADC Burst mode.
+ *		Port Superblink
+ *      Create a sync between super blink and the burst mode
  * 	 ?  Build RX receiver to interpret super blink commands.
  * 
  * Communication
