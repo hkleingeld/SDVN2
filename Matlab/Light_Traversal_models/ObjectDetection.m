@@ -24,7 +24,7 @@ Norm = @(x,y,z) sqrt(x.*x+y.*y+z.*z); %lenght of 3D vector
 Dist2 = @(x,y,z) (x.*x+y.*y+z.*z); %lenght of 3D vector ^2 (for optimization purposes)
 
 
-for H = 1:10
+H = 5
 I0 = 10;
 floorRefl = 1;
 %Light source description%
@@ -33,7 +33,7 @@ m = -1/log2(cos(halfconeapex));
 
 %Object:
 Yloc = 0;
-Xloc = 2;
+Xloc = 0.01;
 Xl = 0.5;
 Yl = 0.5;
 Zl = 1;
@@ -69,7 +69,7 @@ I  = @(x,y,z) I0 .* (z./Norm(x,y,z)).^m;
 %Ehor = @(x,y) (m+1) .*I(x,y) .* cos(acos(H./Norm(x,y,H))) ./ Norm(x,y,H).*Norm(x,y,H)
 %             lichtbron           Uitvalshoek            Afstand^2
 L1 = @(x,y,z) (m+1) .* I(x,y,z) .*(z ./ Norm(x,y,z)) ./ (Dist2(x,y,z) * 2 * pi);
-
+L1_= @(x,y) L1(x,y,H);
 %             lichtbron             Uitvalshoek                 Afstand^2
 L11= @(x,y,z) (m+1) .* I(x,y,H-z).*((H-z) ./ Norm(x,y,H-z)) ./ (Dist2(x,y,H-z) * 2 * pi);
 
@@ -87,14 +87,15 @@ HobjTop = @(x,y) L1(x,y,Hobj) .* L2(x,y,Hobj) .* rec(x,y,Hobj) .* ObjectReflecti
 HobjSide = @(y,z) L11(Xloc,y,z) .* L22(Xloc,y,z) .* ObjectSideRefelction(y,z);
 %Htot = @(x,y) H_(x,y) + Hobj(x,y);
 
-NoObj(H) = integral2(HnoObj,-5,5,-5,5)
-ObjTop =  integral2(HobjTop,-2,2,0,4,'method','iterated');
-ObjSide = integral2(HobjSide,-3,3,0,H,'method','iterated');
-ObjRest = integral2(HObjRest,-5,5,-5,5);
+%NoObj = integral2(HnoObj,-5,5,-5,5)
+NoObj = NumericIntegration(HnoObj,-5,5,-5,5,0.01) %riemannsom
+ObjTop =  NumericIntegration(HobjTop,-5,5,-5,5,0.01) %riemannsom
+ObjSide = NumericIntegration(HobjSide,-5,5,-5,5,0.01) %riemannsom
+ObjRest = NumericIntegration(HObjRest,-5,5,-5,5,0.01) %riemannsom
 
 absdiff = ObjTop+ObjSide+ObjRest-NoObj;
-propdiff = ((ObjTop+ObjSide+ObjRest)-NoObj)/NoObj;
-end
+propdiff = ((ObjTop+ObjSide+ObjRest)-NoObj)/NoObj
+
 
 fmesh(HobjTop,[-4,4])
 hold on

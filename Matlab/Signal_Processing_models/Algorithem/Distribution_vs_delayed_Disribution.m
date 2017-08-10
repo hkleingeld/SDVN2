@@ -24,8 +24,8 @@ k = csvread('rawdata_cofeecup_fewerdist.txt')
 f = [(f(:,1));(j(:,1));(f(:,1));(k(:,1));(f(:,1))];
 
 delay = 90
-d = 200 %samples in main std
-e = 2  %samples in deleayed distribution
+d = 300 %samples in main std
+e = 10  %samples in deleayed distribution
 
 stdAtDetect = 0;
 
@@ -46,7 +46,7 @@ for n = 2:1:N-501
     if res(n-1) == 0
         stdAtDetect = gs(n);
         i = 0;
-        res = [res ((hm(n) < gm(n)-2*gs(n)) | (hm(n) > gm(n)+2*gs(n)))];
+        res = [res ((hm(n) < gm(n)- 4*gs(n)/sqrt(e)) | (hm(n) > gm(n)+4*gs(n)/sqrt(e)))];
     else
         i = i + 1;
         if i > d+delay
@@ -63,9 +63,9 @@ end
 
 plot(gm+3*gs)
 hold on
-plot(gm+2*gs)
+plot(gm+4*gs(n)/sqrt(e))
 plot(gm-3*gs)
-plot(gm-2*gs)
+plot(gm-4*gs(n)/sqrt(e))
 plot(hm)
 plot(mean(f)+res*50)
 hold on
