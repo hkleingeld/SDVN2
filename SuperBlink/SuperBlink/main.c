@@ -33,7 +33,7 @@ void timer1_init(void) {
 	
 	// Counter value selection.
 	// OCR1A = Fclk / (clock_divider * required_interrupt_frequency).
-	OCR1A =	180;	// Set CTC compare value to 100000 Hz at 16Mhz.
+	OCR1A =	160;	// Set CTC compare value to 100000 Hz at 16Mhz.
 }
 
 
@@ -72,7 +72,7 @@ ISR(TIMER1_COMPA_vect) {
 	static uint16_t LoopCtr = 0;
 
 	if(LoopCtr > PeriodTime){
-		PORTC |= FetNr;
+		PORTC |= (0x20 | FetNr);
 		LoopCtr = 0;
 	}
 
@@ -81,7 +81,7 @@ ISR(TIMER1_COMPA_vect) {
 	}
 	
 	if(LoopCtr == SyncTime){
-		PORTC |= 0x20;
+		//PORTC |= 0x20;
 	}
 	
 

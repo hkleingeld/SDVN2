@@ -14,7 +14,7 @@
 #include <math.h>
 
 
-#define NR_OF_STD_SAMPLES 300
+#define NR_OF_STD_SAMPLES 400
 
 #include "StandardDeviation.h"
 #include "../uart/uart.h"

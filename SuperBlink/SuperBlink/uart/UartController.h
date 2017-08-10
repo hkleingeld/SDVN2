@@ -79,7 +79,7 @@ void set_pulse_time(void){
 	
 	PeriodTime = (Period_h << 8) | Period_l;
 	LedTargetTime = (T_on_h << 8) | T_on_l;
-	SyncTime = PeriodTime - 2;
+	SyncTime = PeriodTime - 1;
 	FetNr = (1 << Intencity);
 }
 
