@@ -70,11 +70,11 @@ rec = @(x,y,z) (acos(dot(NormPD,[x,y,-z]/norm([x,y,-z])))/FOV) < 1;
 PD =@(x,y,z) 1/dist(x,y,z)^2 * COSinvalshoek(x,y,-z,0,0,-1) * rec(x,y,z);
 PD_=@(x,y) PD(x,y,1);
 
-I_Floor = @(x,y) Ehor(x,y,0,Norm_Floor) %+ Ehor(x,y-2,0,Norm_Floor) + Ehor(x,y+2,0,Norm_Floor) + Ehor(x,y-4,0,Norm_Floor) + Ehor(x,y+4,0,Norm_Floor)) * Floor(x,y);
-I_Wall_1=@(y,z) Ehor(-W/2,y,z,Norm_Wall_1) %+ Ehor(-W/2,y-2,z,Norm_Wall_1) + Ehor(-W/2,y+2,z,Norm_Wall_1) + Ehor(-W/2,y-4,z,Norm_Wall_1) + Ehor(-W/2,y+4,z,Norm_Wall_1)) .* Wall_1(-W/2,z);
-I_Wall_2=@(y,z) Ehor(W/2,y,z,Norm_Wall_2) %+ Ehor(W/2,y-2,z,Norm_Wall_2) + Ehor(W/2,y+2,z,Norm_Wall_2)+Ehor(W/2,y-4,z,Norm_Wall_2) + Ehor(W/2,y+4,z,Norm_Wall_2)) .* Wall_2(W/2,z);
+I_Floor = @(x,y) (Ehor(x,y,0,Norm_Floor) + Ehor(x,y-2,0,Norm_Floor) + Ehor(x,y+2,0,Norm_Floor) + Ehor(x,y-4,0,Norm_Floor) + Ehor(x,y+4,0,Norm_Floor))* Floor(x,y);
+I_Wall_1=@(y,z) Ehor(-W/2,y,z,Norm_Wall_1).* Wall_1(-W/2,z) %+ Ehor(-W/2,y-2,z,Norm_Wall_1) + Ehor(-W/2,y+2,z,Norm_Wall_1) + Ehor(-W/2,y-4,z,Norm_Wall_1) + Ehor(-W/2,y+4,z,Norm_Wall_1)) ;
+I_Wall_2=@(y,z) Ehor(W/2,y,z,Norm_Wall_2) .* Wall_2(W/2,z)%+ Ehor(W/2,y-2,z,Norm_Wall_2) + Ehor(W/2,y+2,z,Norm_Wall_2)+Ehor(W/2,y-4,z,Norm_Wall_2) + Ehor(W/2,y+4,z,Norm_Wall_2)) ;
 
-[Ehor_Floor floorx floory] = HalfNumericIntegration(I_Floor, -W/2+0.01,W/2,-5,5,step);
+[Ehor_Floor floorx floory] = HalfNumericIntegration(I_Floor, -W/2+0.01,W/2-0.01,-5,5,step);
 [Ehor_Wall1 wally wallz] = HalfNumericIntegration(I_Wall_1,-5,5,0.01,H-step,step);
 [Ehor_Wall2 wally wallz] = HalfNumericIntegration(I_Wall_2,-5,5,0.01,H-step,step);
 
@@ -108,8 +108,9 @@ parfor fx = 1:floorx
 end
 tot = Ehor_Floor_Via_1+Ehor_Floor_Via_2+Ehor_Floor;
 
-
-surf(Ehor_Floor_Via_1+Ehor_Floor_Via_2+Ehor_Floor)
+Ehor_Floor_Via_1(:,1) = 0;
+Ehor_Floor_Via_2(:,26)= 0;
+surf((Ehor_Floor_Via_1+Ehor_Floor_Via_2+Ehor_Floor))
 
 LightAtPD = zeros([floory floorx]);
 parfor fx = 1:floorx

@@ -1,5 +1,5 @@
 clear all
-H = 7;          %hight of the light and PD (located at (0,0,H)
+H = 2.8;          %hight of the light and PD (located at (0,0,H)
 moonlight = 0.01; %lux
 
 %       Overview                Notes: Car should always drive from left to
@@ -21,29 +21,28 @@ moonlight = 0.01; %lux
 %   Xloc = distance on X-axis in meters to front of the car.
 %   Yloc = distance on y-axis in meters to center of the car.
 %   0,0  = Coordinate of the light post, its H meters high.
-CarW = 1.9; %Lenght of the car
-CarL = 4.5; %Whidth of the car
-CarH = 1.2; %Hight of the car
+CarW = 0.5; %Lenght of the car
+CarL = 0.2; %Whidth of the car
+CarH = 1.8; %Hight of the car
 
 %objRefl = 1; %how much of the light is NOT converted to heat on impact.
-objRefl = 1; %Matte alumilium
+objRefl = 0.25; %Matte alumilium
 %objRefl = 0.7; %polished aluminum
 %objRefl = 0.65; %Paper
 
 
 s = 150;        %shininess factor
 %floorRefl = 1;  %amount of light that is NOT converted to light on impact
-%floorRefl = 0.65; %Paper
-floorRefl = 1; %New asphalt
+floorRefl = 0.65; %Paper
 %floorRefl = 0.11; %Aged asphalt
 %floorRefl = 0.85; %Snow
 %floorRefl = 0.11; %Aged asphalt
 
 FOV = 120/180*pi; %80 degrees in radians
 
-halfconeapex = (60*pi)/180; %Angle at Half Power in radiance
+halfconeapex = (35.6/2*pi)/180; %Angle at Half Power in radiance
 m = -1/log2(cos(halfconeapex)); %some index describing the radiation pattern
-lumI = 800;
+lumI = 267;
 total = 0;
 a = 0;
 b = 0;
@@ -51,9 +50,10 @@ c = 0;
 d = 0;
 e = 0;
 stepsize = 0.1;
+Yloc = 0.25;
+for(CarH = 1.8:-0.2:1.2) %should always be bigger than 0.5 CarW for shaddows to work properly!
+    for(Xloc = 0.1:0.1:3) %should always be bigger than CarL for shaddows to work properly!
 
-for(Xloc = -0.1) %should always be bigger than CarL for shaddows to work properly!
-    for(Yloc = 1) %should always be bigger than 0.5 CarW for shaddows to work properly!
 %Object:
 %Yloc = 0; %Y coordinate of the ojbect, should only be positive!
 %Xloc = 0;
@@ -82,8 +82,11 @@ yborder1 = CarH*(Yloc+CarW)/(H-CarH) + Yloc+CarW;
 xr = (Yloc-CarW*0.5)/Xloc; %dy/dx
 yr = (Xloc-CarL)/(Yloc+0.5*CarW); %dy/dx
 
-ObjShaddow= @(x,y)  (y > x*xr) * (x > y*yr) * (x < xborder1) * (y > Yloc-0.5*CarW) * (y < yborder1) * (x > Xloc-CarL);
-
+if(Xloc ~= 0.1)
+    ObjShaddow= @(x,y) (y > x*xr) * (x > y*yr) * (x < xborder1) * (y > Yloc-0.5*CarW) * (y < yborder1) * (x > Xloc-CarL);
+else
+    ObjShaddow= @(x,y) (x < xborder1) * (x > -xborder1) * (y < yborder1) * (y > Yloc-0.5*CarW)
+end
 dist= @(x,y,z) sqrt(x.*x+y.*y+z.*z);
 COSinvalshoek = @(x,y,z,n1,n2,n3) dot([x y z]/dist(x,y,z), [n1 n2 n3]/dist(n1,n2,n3));
 COSuitvalshoek = @(x,y,z,n1,n2,n3) COSinvalshoek(x,y,z,n1,n2,n3);
@@ -124,7 +127,7 @@ a= [a NumericIntegration_(NoObj,-2,6,-7.5,7.5,stepsize)];
 b= [b NumericIntegration_(ObjTop,Xloc-10*stepsize,Xloc+CarL+10*stepsize,Yloc-0.5*CarW-stepsize*10,Yloc+0.5*CarW+stepsize*10,stepsize)];
 c= [c NumericIntegration_(ObjSide,-H,H,0,CarH+stepsize*10,stepsize)]; %object is never going to be in the ground and higher than CarH
 d= [d NumericIntegration(ObjBack,-1,1,0,CarH+0.5,0.01)]; %object is never going to be in the ground and higher than CarH
-e= [e NumericIntegration(ObjFront,-1,1,0,CarH+0.5,0.01)]; %object is never going to be in the ground and higher than CarH
+%e= [e NumericIntegration(ObjFront,-1,1,0,CarH+0.5,0.01)]; %object is never going to be in the ground and higher than CarH
 %a+b+c+d+e
 c
     end
@@ -134,5 +137,12 @@ b(1) = [];
 c(1) = [];
 d(1) = [];
 e(1) = [];
-tot = a+b+c+d+e;
+
+a(isnan(a)) = 0;
+b(isnan(b)) = 0;
+c(isnan(c)) = 0;
+d(isnan(d)) = 0;
+%e(isnan(e)) = 0;
+
+tot = a+b+c+d;
 plot(tot)
